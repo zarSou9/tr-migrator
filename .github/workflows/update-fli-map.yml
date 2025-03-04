@@ -1,0 +1,75 @@
+name: Update Research Map
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "convert_from_directories.py"
+      - "convert_meta.py"
+  repository_dispatch:
+    types: [update_research_map]
+  workflow_dispatch:
+    inputs:
+      map_repo:
+        description: "Map repository to use"
+        required: true
+        type: string
+
+jobs:
+  update-research-map:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout source repository
+        uses: actions/checkout@v4
+        with:
+          path: source-repo
+
+      - name: Checkout website repository
+        uses: actions/checkout@v4
+        with:
+          repository: zarSou9/ai-research-maps
+          token: ${{ secrets.TARGET_REPO_TOKEN }}
+          path: ai-research-maps
+
+      - name: Checkout map repository
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.client_payload.map_repo || inputs.map_repo || secrets.MAP_REPO }}
+          path: map-repo
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Run conversion scripts
+        run: |
+          python convert_from_directories.py -p
+          python convert_meta.py -p
+
+      - name: Copy files to website repository
+        run: |
+          # Create directories if they don't exist
+          mkdir -p ai-research-maps/static/trees
+          mkdir -p ai-research-maps/src/lib/tree_settings
+
+          # Copy the generated JSON file
+          cp source-repo/map.json ai-research-maps/static/trees/${PATH_NAME}.json
+
+          # Copy the meta.json file
+          cp source-repo/meta-converted.json ai-research-maps/src/lib/tree_settings/${PATH_NAME}.json
+
+      - name: Commit and push changes
+        working-directory: ai-research-maps
+        run: |
+          git config user.name "GitHub Action"
+          git config user.email "action@github.com"
+          git add static/trees/${PATH_NAME}.json src/lib/tree_settings/${PATH_NAME}.json
+
+          # Only commit if there are changes
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Action: Update ${PATH_NAME} files from source repository"
+            git push
+          fi
