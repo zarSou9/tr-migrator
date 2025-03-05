@@ -191,8 +191,7 @@ def main(production=False):
     root_path = map_path / root_dir
 
     if not root_path.exists() or not root_path.is_dir():
-        print(f"Error: Root directory '{root_path}' not found.")
-        return
+        raise ValueError(f"Error: Root directory '{root_path}' not found.")
 
     # Build the directory map and generate the JSON structure in one step
     directory_map = build_directory_map(root_path, map_path)
@@ -200,8 +199,7 @@ def main(production=False):
     # Get the root node
     root_node = directory_map.get("0")
     if not root_node:
-        print("Error: Could not find the root node.")
-        return
+        raise ValueError("Error: Could not find the root node.")
 
     output_file = source_path / "map.json"
     output_file.write_text(json.dumps(root_node), encoding="utf-8")

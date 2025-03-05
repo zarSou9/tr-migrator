@@ -1,8 +1,9 @@
+import argparse
 import json
 import os
 from pathlib import Path
 
-from convert_from_directories import convert_markdown_to_html, parse_args
+from convert_from_directories import convert_markdown_to_html
 
 
 def setEnv(path_name):
@@ -10,13 +11,18 @@ def setEnv(path_name):
         f.write(f"PATH_NAME={path_name}\n")
 
 
-def main(production=False):
+def main(production=False, map_repo=""):
     map_path = Path("map-repo" if production else "test_data")
     source_path = Path("source-repo" if production else ".")
 
     meta = json.loads((map_path / "meta.json").read_text(encoding="utf-8"))
 
     if production:
+        allowed = json.loads((source_path / "allowed_maps.json").read_text())
+        if allowed[map_repo]["pathName"] != meta["pathName"]:
+            raise ValueError(
+                f"Invalid path name: {meta['pathName']} for map repo: {map_repo}"
+            )
         setEnv(meta["pathName"])
 
     for section in ["note", "cover_root_description"]:
@@ -26,6 +32,17 @@ def main(production=False):
     (source_path / "meta-converted.json").write_text(
         json.dumps(meta, indent=2), encoding="utf-8"
     )
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--production",
+        "-p",
+        action="store_true",
+    )
+    parser.add_argument("--map-repo", type=str)
+    return vars(parser.parse_args())
 
 
 if __name__ == "__main__":

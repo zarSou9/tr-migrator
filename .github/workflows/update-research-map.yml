@@ -1,11 +1,6 @@
 name: Update Research Map
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "convert_from_directories.py"
-      - "convert_meta.py"
   repository_dispatch:
     types: [update_research_map]
   workflow_dispatch:
@@ -28,13 +23,13 @@ jobs:
         uses: actions/checkout@v4
         with:
           repository: zarSou9/ai-research-maps
-          token: ${{ secrets.TARGET_REPO_TOKEN }}
+          token: ${{ secrets.AI_RESEARCH_MAPS_TOKEN }}
           path: ai-research-maps
 
       - name: Checkout map repository
         uses: actions/checkout@v4
         with:
-          repository: ${{ github.event.client_payload.map_repo || inputs.map_repo || secrets.MAP_REPO }}
+          repository: ${{ github.event.client_payload.map_repo || inputs.map_repo }}
           path: map-repo
 
       - name: Set up Python
@@ -45,7 +40,7 @@ jobs:
       - name: Run conversion scripts
         run: |
           python convert_from_directories.py -p
-          python convert_meta.py -p
+          python convert_meta.py -p --map-repo ${{ github.event.client_payload.map_repo || inputs.map_repo }}
 
       - name: Copy files to website repository
         run: |
