@@ -6,6 +6,8 @@ on:
     paths:
       - "convert_from_directories.py"
       - "convert_meta.py"
+      - "update_all_maps.py"
+      - "allowed_maps.json"
       - ".github/workflows/update-research-map.yml"
       - ".github/workflows/update-all-maps.yml"
   workflow_dispatch:
@@ -14,26 +16,21 @@ jobs:
   trigger-updates:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: Read allowed maps
-        id: read-maps
-        run: |
-          content=$(cat allowed_maps.json)
-          echo "maps=$content" >> $GITHUB_OUTPUT
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
 
-      - name: Trigger update workflows
+      - name: Install dependencies
         run: |
-          maps=$(echo '${{ steps.read-maps.outputs.maps }}' | jq -r 'keys[]')
-          for map in $maps; do
-            curl -X POST \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: token ${{ secrets.SOURCE_TOKEN }}" \
-              "https://api.github.com/repos/${{ github.repository }}/dispatches" \
-              -d "{\"event_type\":\"update_research_map\",\"client_payload\":{\"map_repo\":\"$map\"}}"
-            
-            echo "Triggered update for $map"
-            # Add a small delay to avoid rate limiting
-            sleep 2
-          done
+          python -m pip install --upgrade pip
+          pip install requests
+
+      - name: Run update script
+        run: python update_all_maps.py
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_TOKEN: ${{ secrets.SOURCE_TOKEN }}
