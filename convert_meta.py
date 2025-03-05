@@ -19,10 +19,13 @@ def main(production=False, map_repo=""):
 
     del meta["rootDir"]
 
+    allowed = json.loads((source_path / "allowed_maps.json").read_text())
+    if not allowed.get(map_repo):
+        raise ValueError(f"Repo: {map_repo} not allowed")
+
+    meta["pathName"] = allowed[map_repo]["pathName"]
+
     if production:
-        allowed = json.loads((source_path / "allowed_maps.json").read_text())
-        if not allowed.get(map_repo):
-            raise ValueError(f"Repo: {map_repo} not allowed")
         setEnv(allowed[map_repo]["pathName"])
 
     for section in ["note", "coverRootDescription"]:
