@@ -17,6 +17,8 @@ def main(production=False, map_repo=""):
 
     meta = json.loads((map_path / "meta.json").read_text(encoding="utf-8"))
 
+    del meta["rootDir"]
+
     if production:
         allowed = json.loads((source_path / "allowed_maps.json").read_text())
         if not allowed.get(map_repo):
