@@ -27,9 +27,7 @@ def main(production=False, map_repo=""):
         if meta.get(section):
             meta[section] = convert_markdown_to_html(meta[section])
 
-    (source_path / "meta-converted.json").write_text(
-        json.dumps(meta, indent=2), encoding="utf-8"
-    )
+    (source_path / "meta-converted.json").write_text(json.dumps(meta), encoding="utf-8")
 
 
 def parse_args():
