@@ -187,7 +187,7 @@ def main(production=False):
 
     meta_path = map_path / "meta.json"
 
-    root_dir: str = json.loads(meta_path.read_text())["root_dir"]
+    root_dir: str = json.loads(meta_path.read_text())["rootDir"]
     root_path = map_path / root_dir
 
     if not root_path.exists() or not root_path.is_dir():

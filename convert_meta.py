@@ -19,13 +19,11 @@ def main(production=False, map_repo=""):
 
     if production:
         allowed = json.loads((source_path / "allowed_maps.json").read_text())
-        if allowed[map_repo]["pathName"] != meta["pathName"]:
-            raise ValueError(
-                f"Invalid path name: {meta['pathName']} for map repo: {map_repo}"
-            )
-        setEnv(meta["pathName"])
+        if not allowed.get(map_repo):
+            raise ValueError(f"Repo: {map_repo} not allowed")
+        setEnv(allowed[map_repo]["pathName"])
 
-    for section in ["note", "cover_root_description"]:
+    for section in ["note", "coverRootDescription"]:
         if meta.get(section):
             meta[section] = convert_markdown_to_html(meta[section])
 
