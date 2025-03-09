@@ -1,6 +1,19 @@
+import argparse
 import json
 import re
 from pathlib import Path
+from typing import Literal
+
+from utils import (
+    OL,
+    UL,
+    get_unique_path,
+    html_to_md,
+    rjson,
+    truncate_string,
+    wjson,
+    wtext,
+)
 
 
 def get_node_id_idxs(node_id: str, only_node_ids: bool = True) -> list[int]:
@@ -37,30 +50,9 @@ def get_node_from_id(node_id: str | None, root: dict | None) -> dict | None:
     return current_node
 
 
-def sanitize_filename(name):
-    """Convert a string to a valid filename by removing invalid characters."""
+def sanitize_filename(name: str):
     # Replace spaces with underscores and remove other invalid characters
-    return re.sub(r"[^\w\-\.]", "_", name.replace(" ", "_"))
-
-
-def convert_html_to_markdown(text, convert=True):
-    if not text:
-        return text
-    pattern = (
-        r"<a\s+href=['\"]([^'\"]+)['\"](?:\s+target=['\"][^'\"]*['\"])?\s*>([^<]+)</a>"
-    )
-    markdown_text = re.sub(pattern, r"[\2](\1)", text)
-    # Remove spaces before or after <br> tags
-    markdown_text = re.sub(r"\s*<br\s*\/?>\s*", "<br>", markdown_text)
-    markdown_text = re.sub(r"<br\s*\/?>", "\n", markdown_text)
-
-    markdown_text = re.sub(r"(\S)<i>", r"\1 <i>", markdown_text)
-    markdown_text = re.sub(r"</i>(\S)", r"</i> \1", markdown_text)
-    markdown_text = re.sub(
-        r"<i>\s*(.*?)\s*</i>", lambda m: f"*{m.group(1).strip()}*", markdown_text
-    )
-
-    return markdown_text
+    return re.sub(r"[^\w\-\.]", "_", name.strip().replace(" ", "_"))
 
 
 def get_node_path(node_id: str, root: dict) -> str | None:
@@ -131,69 +123,164 @@ def convert_links_to_paths(links: list, root: dict) -> list:
     return converted_links
 
 
-def create_directory_structure(node, root, parent_path=Path(), convert_html=False):
-    """Recursively create directories and files for each node."""
-    node_title = node.get("title", "Untitled")
+def get_breakdown_strat(node: dict) -> Literal["sub_nodes", "breakdowns"]:
+    if not node.get("breakdowns"):
+        return "sub_nodes"
 
-    dir_name = sanitize_filename(node_title)
-    dir_path = parent_path / dir_name
+    if any(node["breakdowns"][0].get(key) for key in ["paper", "explanation"]):
+        return "breakdowns"
 
-    dir_path.mkdir(exist_ok=True, parents=True)
+    return "breakdowns" if len(node["breakdowns"]) > 1 else "sub_nodes"
 
-    content = ""
 
-    mini_description = node.get("mini_description", "")
-    if mini_description:
-        content += "### Mini Description\n\n"
-        content += f"{convert_html_to_markdown(mini_description, convert_html)}\n\n"
+def create_directory_structure(
+    node,
+    root,
+    parent_path=Path(),
+    convert_html=True,
+    preserve_order=True,
+    breakdowns_identifier=".",
+):
+    dir_name = sanitize_filename(node["title"])
+    dir_path = parent_path / (
+        dir_name
+        + (breakdowns_identifier if get_breakdown_strat(node) == "breakdowns" else "")
+    )
 
-    description = node.get("description", "")
-    if description:
-        content += "### Description\n\n"
-        content += f"{convert_html_to_markdown(description, convert_html)}\n\n"
+    dir_path.mkdir(parents=True)
+
+    sections: list[str] = []
+
+    if node.get("mini_description"):
+        sections.append(f"### Mini Description\n\n{node['mini_description']}")
+
+    if node.get("description"):
+        sections.append(f"### Description\n\n{node['description']}")
+
+    if node.get("questions"):
+        sections.append(
+            f"### Questions\n\n{UL([q['question'] for q in node['questions']]).to_str(spacing=1)}"
+        )
+
+    if preserve_order and node.get("breakdowns"):
+        if get_breakdown_strat(node) == "breakdowns":
+            titles = [
+                sanitize_filename(b.get("title"))
+                if b.get("title")
+                else f'Paper: "{b.get("paper", {}).get("title")}"'
+                for b in node["breakdowns"]
+            ]
+        else:
+            breakdown = node["breakdowns"][0]
+            titles = [sanitize_filename(sub["title"]) for sub in breakdown["sub_nodes"]]
+
+        if titles != sorted(titles):
+            sections.append(f"### Order\n\n{OL(titles)}")
 
     links = node.get("links", [])
     if links:
         converted_links = convert_links_to_paths(links, root)
-        content += "### Related Nodes\n\n"
+
+        link_list = UL()
 
         for link in converted_links:
             path = link.get("path", "")
             title = link.get("title", path)
 
-            content += f"- [{title}](/{path})\n"
+            link_list.add(
+                f"[{title}](/{path})",
+                UL([f"Reason: {link['reason']}"]) if link.get("reason") else None,
+            )
 
-            if "reason" in link and link["reason"]:
-                content += f"\t- Reason: {link['reason']}\n"
+        sections.append(f"### Related Nodes\n\n{link_list}")
 
-        content += "\n"
+    wtext(
+        html_to_md("\n\n".join(sections) + "\n", convert_html),
+        dir_path / f"{dir_name}.md",
+    )
 
-    (dir_path / f"{dir_name}.md").write_text(content.strip() + "\n", encoding="utf-8")
+    if node.get("papers"):
+        wjson(node["papers"], dir_path / "papers.json", indent=2)
 
-    if "breakdowns" in node and node["breakdowns"]:
-        breakdown = node["breakdowns"][0]
-        if "sub_nodes" in breakdown:
-            for sub_node in breakdown["sub_nodes"]:
-                create_directory_structure(sub_node, root, dir_path, convert_html)
+    if node.get("breakdowns"):
+        for breakdown in node["breakdowns"]:
+            if get_breakdown_strat(node) == "breakdowns":
+                title = sanitize_filename(
+                    breakdown.get("title")
+                    or f"Untitled {truncate_string(breakdown.get('paper', {}).get('title', ''), end='_')}"
+                )
+                sub_parent_path = get_unique_path(dir_path / title, spacer="")
+                sub_parent_path.mkdir()
+                sub_sections = []
+
+                if breakdown.get("paper"):
+                    sub_sections.append(
+                        f"### Paper\n\n```json\n{json.dumps(breakdown['paper'], indent=10).replace(' ' * 10, '\t')}\n```"
+                    )
+
+                if breakdown.get("explanation"):
+                    sub_sections.append(
+                        f"### Explanation\n\n{html_to_md(breakdown['explanation'], convert_html)}"
+                    )
+
+                titles = [
+                    sanitize_filename(sub["title"])
+                    + (
+                        breakdowns_identifier
+                        if get_breakdown_strat(sub) == "breakdowns"
+                        else ""
+                    )
+                    for sub in breakdown["sub_nodes"]
+                ]
+                if titles != sorted(titles):
+                    sub_sections.append(f"### Order\n\n{OL(titles)}")
+
+                wtext(
+                    "\n\n".join(sub_sections) + "\n",
+                    sub_parent_path / f"{sub_parent_path.name}.md",
+                )
+            else:
+                sub_parent_path = dir_path
+
+            if "sub_nodes" in breakdown:
+                for sub_node in breakdown["sub_nodes"]:
+                    create_directory_structure(
+                        sub_node, root, sub_parent_path, convert_html, preserve_order
+                    )
 
 
-def main():
-    json_file = Path("fli-map.json")
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("json_file", type=Path, help="The JSON file to convert.")
+    parser.add_argument("--output-path", type=Path, required=True)
+    parser.add_argument(
+        "--no-markdown",
+        "-nmd",
+        action="store_false",
+        help="Dont convert HTML to Markdown.",
+    )
 
-    try:
-        data = json.loads(json_file.read_text(encoding="utf-8"))
-    except FileNotFoundError:
-        print("Error: fli-map.json file not found.")
-        return
-    except json.JSONDecodeError:
-        print("Error: Invalid JSON format in fli-map.json.")
-        return
+    args = vars(parser.parse_args())
+    args["convert_html"] = args["no_markdown"]
+    return args
 
-    create_directory_structure(data, data, convert_html=True)
+
+def main(json_file: Path, output_path=Path(), convert_html=True, preserve_order=True):
+    data = rjson(json_file)
+
+    output_path.mkdir(parents=True, exist_ok=True)
+    create_directory_structure(data, data, output_path, convert_html, preserve_order)
     print(
         f"Directory structure created successfully based on '{data.get('title', 'Root')}'"
     )
 
 
+# if __name__ == "__main__":
+#     main(**parse_args())
+
+
 if __name__ == "__main__":
-    main()
+    main(
+        json_file=Path("test_data/breakdowns/map.json"),
+        output_path=Path("test_output/breakdowns"),
+    )

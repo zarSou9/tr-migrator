@@ -1,3 +1,6 @@
-test_data
-map.json
-meta-converted.json
+test_output
+__pycache__
+*meta-converted.json
+*-map.json
+.pytest_cache
+.DS_Store
