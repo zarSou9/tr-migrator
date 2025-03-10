@@ -412,7 +412,7 @@
                                   "id": "001000001"
                                 },
                                 {
-                                  "title": "Etc...",
+                                  "title": "Etc",
                                   "mini_description": "Applied ethics covers a vast and wide space. Not all branches of applied ethics can be covered here.",
                                   "id": "001000002"
                                 },
@@ -466,7 +466,7 @@
                                   "id": "001000101"
                                 },
                                 {
-                                  "title": "Etc...",
+                                  "title": "Etc",
                                   "mini_description": "Applied ethics covers a vast and wide space. Not all branches of applied ethics can be covered here.",
                                   "id": "001000102"
                                 },
@@ -511,7 +511,7 @@
                           ]
                         },
                         {
-                          "title": "Etc...",
+                          "title": "Etc",
                           "mini_description": "Applied ethics covers a vast and wide space. Not all branches of applied ethics can be covered here.",
                           "id": "0010002"
                         },
@@ -531,7 +531,7 @@
                                   "id": "001000300"
                                 },
                                 {
-                                  "title": "Etc...",
+                                  "title": "Etc",
                                   "mini_description": "Applied ethics covers a vast and wide space. Not all branches of applied ethics can be covered here.",
                                   "id": "001000301"
                                 },
@@ -1089,7 +1089,7 @@
                           ]
                         },
                         {
-                          "title": "Unknown possible ethical structures...",
+                          "title": "Unknown possible ethical structures",
                           "mini_description": "The theories covered in this work by no means exhaust the space of all possible normative theories.",
                           "description": "AIs may one day use strange hybrid or novel approaches to normative ethics, using both new and old theories with new and old concepts.",
                           "id": "0010403"

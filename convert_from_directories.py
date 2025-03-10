@@ -72,8 +72,11 @@ def resolve_breakdown(file_path: Path, parent_path: Path):
 def resolve_node(file_path: Path, parent_path: Path, is_b: bool, id: str):
     node: Node = {"id": id, "title": desanitize_filename(file_path.stem)}
     content = rtext(file_path)
-
     sub_dir_names = get_sub_dir_names(parent_path)
+
+    papers_path = parent_path / "papers.json"
+    if papers_path.exists():
+        node["papers"] = rjson(papers_path)
 
     for section_title, section_content in split_by_sections(content):
         match section_title:
@@ -280,12 +283,12 @@ def main(
     print(f"JSON structure reconstructed successfully to '{output_file}'")
 
 
-# if __name__ == "__main__":
-#     main(**parse_args())
-
 if __name__ == "__main__":
-    main(
-        root_parent=Path("test_output/breakdowns"),
-        meta_file=Path("test_data/breakdowns/meta.json"),
-        output_file=Path("test_output/breakdowns/map.json"),
-    )
+    main(**parse_args())
+
+# if __name__ == "__main__":
+#     main(
+#         root_parent=Path("test_output/fli"),
+#         meta_file=Path("test_data/fli/meta.json"),
+#         output_file=Path("test_output/fli/map.json"),
+#     )

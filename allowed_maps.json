@@ -1,5 +1,11 @@
 {
   "zarSou9/fli-map": {
     "pathName": "fli-map"
+  },
+  "zarSou9/llm-ai-safety-map": {
+    "pathName": "llm-ai-safety-map"
+  },
+  "zarSou9/llm-ai-safety-goals": {
+    "pathName": "llm-ai-safety-goals"
   }
 }

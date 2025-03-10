@@ -281,6 +281,6 @@ def main(json_file: Path, output_path=Path(), convert_html=True, preserve_order=
 
 if __name__ == "__main__":
     main(
-        json_file=Path("test_data/breakdowns/map.json"),
-        output_path=Path("test_output/breakdowns"),
+        json_file=Path("test_data/fli/map.json"),
+        output_path=Path("test_output/fli"),
     )

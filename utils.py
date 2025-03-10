@@ -150,21 +150,21 @@ def resolve_md_list(
 
     list_stack = [(0, root_list)]  # (indent_level, list_object)
 
-    for full_line in lines:
-        indent_level = len(full_line) - len(full_line.lstrip())
+    for i, full_line in enumerate(lines):
         line = full_line.lstrip()
+        indent_level = len(full_line) - len(line)
 
         if not line:  # Skip empty lines
             continue
 
         temp_list_stack = list_stack.copy()  # Temporary until line is validated
-        while temp_list_stack and temp_list_stack[-1][0] >= indent_level:
+        while temp_list_stack and temp_list_stack[-1][0] > indent_level:
             temp_list_stack.pop()
 
         if not temp_list_stack:  # Fallback if stack is empty
             temp_list_stack = [(0, root_list)]
 
-        parent_list = temp_list_stack[-1][1]
+        parent_index, parent_list = temp_list_stack[-1]
 
         if parent_list.kind == "ordered":
             if not is_number_line(line):
@@ -179,16 +179,14 @@ def resolve_md_list(
         list_stack = temp_list_stack
 
         # Check if next line indicates a sublist
-        has_child = False
-        if lines.index(full_line) < len(lines) - 1:
-            next_line = lines[lines.index(full_line) + 1]
-            next_indent = len(next_line) - len(next_line.lstrip())
-            has_child = next_indent > indent_level
-
         child_list = None
-        if has_child:
-            child_list = OL() if is_number_line(next_line.lstrip()) else UL()
-            list_stack.append((indent_level + 1, child_list))
+        if i < len(lines) - 1:
+            next_line = lines[i + 1]
+            next_indent = len(next_line) - len(next_line.lstrip())
+
+            if next_indent > indent_level:
+                child_list = OL() if is_number_line(next_line.lstrip()) else UL()
+                list_stack.append((indent_level + 1, child_list))
 
         if parent_list == root_list and parent_list.kind == "ordered" and ol_filler:
             parent_list.insert(idx, ListItem(s=item_text, child=child_list))
