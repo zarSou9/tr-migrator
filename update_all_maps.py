@@ -44,7 +44,7 @@ def main():
         except Exception as e:
             print(f"Error triggering update for {map_repo}: {e}")
 
-        time.sleep(2)
+        time.sleep(15)
 
 
 if __name__ == "__main__":
