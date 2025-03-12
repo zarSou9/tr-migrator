@@ -1,3 +1,3 @@
-# AI Research Maps Migration Helper
+# TRecursive Migration Helper
 
-GitHub workflows and migration logic for CI/CD of AI Research Maps
+GitHub workflows and migration logic for CI/CD of [TRecursive](https://trecursive.com)
