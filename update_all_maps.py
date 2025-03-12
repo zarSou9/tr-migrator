@@ -32,7 +32,7 @@ def main():
             "Authorization": f"token {github_token}",
         }
         payload = {
-            "event_type": "update_research_map",
+            "event_type": "update_map",
             "client_payload": {"map_repo": map_repo},
         }
 

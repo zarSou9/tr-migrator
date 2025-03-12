@@ -1,4 +1,4 @@
-name: Update Research Map
+name: Update Map
 
 on:
   repository_dispatch:
@@ -11,7 +11,7 @@ on:
         type: string
 
 jobs:
-  update-research-map:
+  update-map:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout source repository
@@ -22,9 +22,9 @@ jobs:
       - name: Checkout website repository
         uses: actions/checkout@v4
         with:
-          repository: zarSou9/ai-research-maps
+          repository: zarSou9/trecursive
           token: ${{ secrets.AI_RESEARCH_MAPS_TOKEN }}
-          path: ai-research-maps
+          path: trecursive
 
       - name: Checkout map repository
         uses: actions/checkout@v4
@@ -50,17 +50,17 @@ jobs:
       - name: Copy files to website repository
         run: |
           # Create directories if they don't exist
-          mkdir -p ai-research-maps/static/trees
-          mkdir -p ai-research-maps/src/lib/tree_settings
+          mkdir -p trecursive/static/trees
+          mkdir -p trecursive/src/lib/tree_settings
 
           # Copy the generated JSON file
-          cp source-repo/map.json ai-research-maps/static/trees/${PATH_NAME}.json
+          cp source-repo/map.json trecursive/static/trees/${PATH_NAME}.json
 
           # Copy the meta.json file
-          cp source-repo/meta-converted.json ai-research-maps/src/lib/tree_settings/${PATH_NAME}.json
+          cp source-repo/meta-converted.json trecursive/src/lib/tree_settings/${PATH_NAME}.json
 
       - name: Commit and push changes
-        working-directory: ai-research-maps
+        working-directory: trecursive
         run: |
           git config user.name "GitHub Action"
           git config user.email "action@github.com"
