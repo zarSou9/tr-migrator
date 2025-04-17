@@ -53,11 +53,11 @@ def truncate_string(text: str, max_length=18, end="..."):
 
 
 def wtext(text: str, path: str | Path):
-    Path(path).write_text(text, encoding="utf-8")
+    Path(path).write_text(text)
 
 
 def rtext(path: str | Path):
-    return Path(path).read_text(encoding="utf-8")
+    return Path(path).read_text()
 
 
 def wjson(d: dict, path: str | Path, **kwargs):

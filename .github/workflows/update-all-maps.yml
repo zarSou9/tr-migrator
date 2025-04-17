@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - "convert_from_directories.py"
+      - "create_map.py"
       - "convert_meta.py"
       - "update_all_maps.py"
       - ".github/workflows/update-map.yml"

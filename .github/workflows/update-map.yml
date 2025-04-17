@@ -44,7 +44,7 @@ jobs:
 
       - name: Run conversion scripts
         run: |
-          python source-repo/convert_from_directories.py -p
+          python source-repo/create_map.py -p
           python source-repo/convert_meta.py -p --map-repo ${{ github.event.client_payload.map_repo || inputs.map_repo }}
 
       - name: Copy files to website repository

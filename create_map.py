@@ -241,36 +241,14 @@ def process_directory(
                         breakdown["sub_nodes"].append(directory_map[child_node_id])
 
 
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--production",
-        "-p",
-        action="store_true",
-    )
-    return vars(parser.parse_args())
-
-
-def main(
-    production=False,
-    root_parent: Path | None = None,
-    meta_file: Path | None = None,
-    output_file: Path | None = None,
-):
-    root_parent = root_parent or Path("map-repo" if production else "test_output")
-    meta_file = meta_file or (root_parent / "meta.json")
-    working_path = Path("source-repo" if production else ".")
-    output_file = output_file or (working_path / "map.json")
-
-    meta = rjson(meta_file)
-
-    root_path: Path = root_parent / meta["rootDir"]
+def handle_directory_input(repo_root: Path, meta: dict, output_file: Path):
+    root_path: Path = repo_root / meta["rootDir"]
     if not root_path.exists() or not root_path.is_dir():
         raise ValueError(f"Root directory '{root_path}' not found.")
 
     # Build the directory map and generate the JSON structure in one step
     directory_map = build_directory_map(
-        root_path, root_parent, meta.get("breakdownsIdentifier") or "."
+        root_path, repo_root, meta.get("breakdownsIdentifier") or "."
     )
 
     # Get the root node
@@ -283,12 +261,39 @@ def main(
     print(f"JSON structure reconstructed successfully to '{output_file}'")
 
 
+def handle_json_input(map_file: Path, output_file: Path):
+    # Add ids
+    pass
+
+
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--production",
+        "-p",
+        action="store_true",
+    )
+    return vars(parser.parse_args())
+
+
+def main(
+    production=False,
+    repo_root: Path | None = None,
+    meta_file: Path | None = None,
+    output_file: Path | None = None,
+):
+    repo_root = repo_root or Path("map-repo" if production else "test_output")
+    meta_file = meta_file or (repo_root / "meta.json")
+    working_path = Path("source-repo" if production else ".")
+    output_file = output_file or (working_path / "map.json")
+
+    meta = rjson(meta_file)
+
+    if meta.get("rootDir"):
+        handle_directory_input(repo_root, meta, output_file)
+    else:
+        handle_json_input(working_path / meta["sourceFile"], output_file)
+
+
 if __name__ == "__main__":
     main(**parse_args())
-
-# if __name__ == "__main__":
-#     main(
-#         root_parent=Path("test_output/fli"),
-#         meta_file=Path("test_data/fli/meta.json"),
-#         output_file=Path("test_output/fli/map.json"),
-#     )

@@ -2,7 +2,7 @@ import argparse
 import os
 from pathlib import Path
 
-from convert_from_directories import md_to_html
+from create_map import md_to_html
 from utils import rjson, wjson
 
 
