@@ -33,7 +33,10 @@ def main(
 
     meta = rjson(map_path / "meta.json")
 
-    del meta["rootDir"]
+    if "rootDir" in meta:
+        del meta["rootDir"]
+    if "sourceFile" in meta:
+        del meta["sourceFile"]
 
     if production:
         allowed = rjson(source_path / "allowed_maps.json")
