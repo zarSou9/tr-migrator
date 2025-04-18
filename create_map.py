@@ -261,9 +261,24 @@ def handle_directory_input(repo_root: Path, meta: dict, output_file: Path):
     print(f"JSON structure reconstructed successfully to '{output_file}'")
 
 
+def clean_tree(tree: dict, current_id: str = "", idx: int = 0):
+    tree["id"] = current_id + format_index(idx)
+
+    if "children" in tree:
+        if tree["children"]:
+            tree["breakdowns"] = [{"sub_nodes": tree["children"]}]
+        del tree["children"]
+
+    for bi, breakdown in enumerate(tree.get("breakdowns") or []):
+        breakdown["id"] = tree["id"] + format_index(bi)
+        for ci, child in enumerate(breakdown["sub_nodes"]):
+            clean_tree(child, breakdown["id"], ci)
+
+
 def handle_json_input(map_file: Path, output_file: Path):
-    # Add ids
-    pass
+    tree = rjson(map_file)
+    clean_tree(tree)
+    wjson(tree, output_file)
 
 
 def parse_args():
@@ -297,3 +312,5 @@ def main(
 
 if __name__ == "__main__":
     main(**parse_args())
+    # Path("test_output/tax").mkdir(exist_ok=True, parents=True)
+    # handle_json_input(Path("test_data/tax/map.json"), Path("test_output/tax/map.json"))
