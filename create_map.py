@@ -307,7 +307,7 @@ def main(
     if meta.get("rootDir"):
         handle_directory_input(repo_root, meta, output_file)
     else:
-        handle_json_input(working_path / meta["sourceFile"], output_file)
+        handle_json_input(repo_root / meta["sourceFile"], output_file)
 
 
 if __name__ == "__main__":
